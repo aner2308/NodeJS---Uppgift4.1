@@ -47,7 +47,13 @@ router.post("/register", async (req, res) => {
         const user = new User({ username, password });
         await user.save();
 
-        res.status(201).json({ message: "Användare skapad" });
+        const payload = { username: username };
+        const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+        const response = {
+            message: "Användare skapad och inloggad",
+            token: token
+        }
+        res.status(201).json({ response });
 
     } catch {
         res.status(500).json({ error: "Server error" });
