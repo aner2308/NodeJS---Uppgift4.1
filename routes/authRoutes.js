@@ -1,6 +1,19 @@
 //Routes för auth
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
+require("dotenv").config();
+
+//Koppla till MongoDB
+mongoose.set("strictQuery", false);
+mongoose.connect(process.env.MONGO_URL).then( () => {
+    console.log("Kopplad till MongoDB-databasen.")
+}).catch((error) => {
+    console.error("Fel vid koppliing till databasen...")
+});
+
+//Användar model
+const User = require("../models/User");
 
 //Lägg till ny användare
 router.post("/register", async (req, res) => {
@@ -14,6 +27,9 @@ router.post("/register", async (req, res) => {
         }
 
         //Om inmatning är korrekt
+        const user  = new User({ username, password });
+        await user.save();
+
         res.status(201).json({ message: "Användare skapad"});
 
     } catch {
@@ -32,11 +48,20 @@ router.post("/login", async(req, res) => {
             return res.status(400).json({ error: "Felaktig inmatning, skriv in användarnamn och lösenord..."})
         }
 
-        if (username === "Anton" && password === "test") {
-            res.status(200).json({ message: "Inloggningen lyckades!"});
-        } else {
-            res.status(401).json({ error: "Felaktigt användrnamn/lösenord."})
+        //Kontrollerar om användaren existerar 
+        const user = await User.findOne({ username });
+        if(!user) {
+            return res.status(401).json({ error: "Felaktigt användarnamn/lösenord!"});
         }
+
+        //Kontrollera lösenord
+        const isPasswordMatch = await user.comparePassword(password);
+        if(!isPasswordMatch) {
+            return res.status(401).json({ error: "Felaktigt användarnamn/lösenord!"});
+        } else {
+            res.status(200).json({ message: "Användare inloggad!" });
+        }
+
 
     } catch {
         res.status(500).json({ error: "Server error"});
