@@ -19,7 +19,9 @@ app.post("/api/skyddad", authenticateToken, async (req, res) => {
     try {
         // Skapa ett nytt jobbobjekt med data från begäran
         const newJob = new Job({
-            title: req.body.title,
+            companyname: req.body.companyname,
+            jobtitle: req.body.jobtitle,
+            location: req.body.location,
             description: req.body.description,
         });
 
@@ -64,11 +66,31 @@ async function createJobsCollection() {
     }
 }
 
-// Skapa en Mongoose-modell för "jobs"
-const Job = mongoose.model('Job', {
-    title: String,
-    description: String,
+//Jobb schema
+const jobSchema = new mongoose.Schema({
+    companyname: {
+        type: String,
+        required: true,
+    },
+    jobtitle: {
+        type: String,
+        required: true,
+    },
+    location: {
+        type: String,
+        required: true,
+    },
+    description: {
+        type: String,
+        required: true,
+    },
+    created: {
+        type: Date,
+        default: Date.now
+    }
 });
+
+const Job = mongoose.model("Job", jobSchema);
 
 // Middleware för att verifiera JWT och skapa "jobs" collection
 async function authenticateToken(req, res, next) {
